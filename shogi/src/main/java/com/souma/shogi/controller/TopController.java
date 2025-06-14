@@ -10,7 +10,7 @@ public class TopController {
 
     @GetMapping("/")
     public String hello() {
-        return "top";
+        return "game";
     }
-    
+
 }

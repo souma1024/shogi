@@ -1,0 +1,24 @@
+.game-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+}
+
+.board {
+    width: 500px;
+    height: 500px;
+}
+
+.row {
+    display: flex;
+}
+
+.cell {
+    text-align: center;
+    width: calc(500px / 9);
+    height: calc(500px / 9);
+    background-color: bisque;
+    border: 1px solid;
+}
