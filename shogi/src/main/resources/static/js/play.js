@@ -1,56 +1,61 @@
 const movementPatterns = {
     1: { directions: [[-1, 0]]},  //歩
-    4: { directions: [[-1, 0]], repeat: true }, // 香車
-    5: { directions: [[-2, -1], [-2, 1]] }, // 桂馬
-    6: { directions: [[-1, -1], [-1, 0], [-1, 1], [1, -1], [1, 1]] }, // 銀
-    7: { directions: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, 0]] }, // 金
+    2: { directions: [[-1, 0]], repeat: true }, // 香車
+    3: { directions: [[-2, -1], [-2, 1]] }, // 桂馬
+    4: { directions: [[-1, -1], [-1, 0], [-1, 1], [1, -1], [1, 1]] }, // 銀
+    5: { directions: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, 0]] }, // 金
 
-    8: { directions: [[-1, -1], [-1, 1], [1, -1], [1, 1]], repeat: true }, // 角
-    9: { directions: [[-1, 0], [1, 0], [0, -1], [0, 1]], repeat: true }, // 飛車
+    6: { directions: [[-1, -1], [-1, 1], [1, -1], [1, 1]], repeat: true }, // 角
+    7: { directions: [[-1, 0], [1, 0], [0, -1], [0, 1]], repeat: true }, // 飛車
 
-    10: { directions: [  // 龍王
-            [-1, 0], [1, 0], [0, -1], [0, 1]
-        ], 
-         repeat: true,
-         add: [[-1, -1], [-1, 1], [1, -1], [1, 1]] },
-
-    11: { directions: [ // 馬
+    8: { directions: [ // 馬
                 [-1, -1], [-1, 1], [1, -1], [1, 1]
             ],
           repeat: true, 
           add: [[-1, 0], [1, 0], [0, -1], [0, 1]] },
+    9: { directions: [  // 龍王
+                [-1, 0], [1, 0], [0, -1], [0, 1]
+            ], 
+         repeat: true,
+         add: [[-1, -1], [-1, 1], [1, -1], [1, 1]] },
 
-    20: { directions: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, 0]] }, // と金（成り歩）など = 金と同じ
+    10: { directions: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, 0]] }, // と金（成り歩）など = 金と同じ
     77: { directions: [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]] }, // 王
 
 } 
 
 const komaName = {
     1: "歩",
-    4: "香",
-    5: "桂",
-    6: "銀",
-    7: "金",
-    8: "角",
-    9: "飛",
+    2: "香",
+    3: "桂",
+    4: "銀",
+    5: "金",
+    6: "角",
+    7: "飛",
+    8: "馬",
+    9: "龍",
+    10: "成",
     77: "王"
 }
 
 
 function init() {
     let gameBoard = [
-        [-4, -5, -6, -7, -77, -7, -6, -5, -4],
-        [0, -9, 0, 0, 0, 0, 0, -8, 0],
+        [-2, -3, -4, -5, -77, -5, -4, -3, -2],
+        [0, -7, 0, 0, 0, 0, 0, -6, 0],
         [-1, -1, -1, -1, -1, -1, -1, -1, -1],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [0, 0, 0, 0, 0, 0, 0, 0, 0],
         [1, 1, 1, 1, 1, 1, 1, 1, 1],
-        [0, 8, 0, 0, 0, 0, 0, 9, 0],
-        [4, 5, 6, 7, 77, 7, 6, 5, 4]  
+        [0, 6, 0, 0, 0, 0, 0, 7, 0],
+        [2, 3, 4, 5, 77, 5, 4, 3, 2]  
     ];
 
-    debugDisplay(gameBoard);
+    let opponentList = [0, 0, 0, 0, 0, 0, 0, 0];
+    let playerList = [0, 0, 0, 0, 0, 0, 0, 0];
+
+    debugDisplay(gameBoard, -1);
 
     let order = 0;
     let from = null;    
@@ -58,17 +63,17 @@ function init() {
     let cells = document.getElementsByClassName("cell");
     for (let [index, cell] of Object.entries(cells)) {
         cell.addEventListener("click", () => {
-            let direct = order % 2 === 0 ? -1 : 1;
+            let direct = order % 2 === 0 ? 1 : -1;
             let num = parseInt(index, 10);
             let row = Math.floor(num / 9);
             let col = num % 9;
-
+            
             if (from === null) {
                 from = {row, col};
                 return;
             }
 
-            if (from.row === row && from.col === col) {
+            if (from.row === row && from.col === col || direct * gameBoard[from.row][from.col] < 0) {
                 from = null;
                 return;
             }
@@ -76,17 +81,27 @@ function init() {
             let to = {row, col};
             let koma = gameBoard[from.row][from.col];
 
+
             if (!isMovable(from, to, koma, gameBoard)) {
                 return;
             }
             
+            if (gameBoard[from.row][from.col] * gameBoard[to.row][to.col] < 0) {
+                if (direct === 1) {
+                    playerList[Math.abs(gameBoard[to.row][to.col])]++;
+                    debugSubDisplay(playerList, direct);
+                } else {
+                    opponentList[gameBoard[to.row][to.col]]++;
+                    debugSubDisplay(opponentList, direct);
+                }
+            }
             
             let temp = gameBoard[from.row][from.col];
             gameBoard[from.row][from.col] = 0;
             gameBoard[to.row][to.col] = temp;
-            debugDisplay(gameBoard);
             from = null;
             order++;
+            debugDisplay(gameBoard, direct);
         })
     }
 }
@@ -114,7 +129,7 @@ function isMovable(from, to, koma, board) {
 
                 return true;
             }
-            // 壁外・駒に当たったら break するのが理想
+            // 壁外・駒に当たったら break
             if (board[r][c] === undefined || board[r][c] != 0) {
                 break;
             }
@@ -125,8 +140,23 @@ function isMovable(from, to, koma, board) {
 }
 
 
+function debugSubDisplay(list, direct) {
+    let subCells;
+    if (direct === 1) {
+        subCells = document.getElementById("player").getElementsByClassName("sub-cell");
+    } else {
+        subCells = document.getElementById("opponent").getElementsByClassName("sub-cell");
+    }
 
-function debugDisplay(board) {
+    for (let [index, cell] of Object.entries(subCells)) {
+        if (list[index] > 0) {
+            cell.innerHTML = `${komaName[index]}`;
+        }
+    }
+    
+}
+
+function debugDisplay(board, direct) {
     let cells  = document.getElementsByClassName("cell");
 
     for (let [index, cell] of Object.entries(cells)) {
@@ -134,9 +164,15 @@ function debugDisplay(board) {
         let row = Math.floor(num / 9);
         let col = num % 9;
 
+        let isOpponent = board[row][col] < 0 ? true : false;
+
         let koma = Math.abs(board[row][col]);
         if (koma !== 0) {
-            cell.innerHTML = `${komaName[koma]}`;   
+            if (isOpponent) {
+                cell.innerHTML = `<p style='color: red;'>${komaName[koma]}</p>`;  
+            } else {
+                cell.innerHTML = `<p>${komaName[koma]}</p>`;  
+            }
         }
 
         if (koma === 0) {
@@ -144,6 +180,8 @@ function debugDisplay(board) {
         }
 
     }
+    const directDiv = document.getElementById("direct");
+    directDiv.innerHTML = -1 * direct;
 
     const debugDiv = document.getElementById("debugArea");
     let html = "<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse;'>";
@@ -157,7 +195,6 @@ function debugDisplay(board) {
     }
     html += "</table>";
     debugDiv.innerHTML = html;
-
 }
 
 
