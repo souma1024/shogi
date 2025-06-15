@@ -40,3 +40,7 @@
     background-color: bisque;
     border: 1px solid;
 }
+
+.cell:hover {
+    cursor: pointer;
+}

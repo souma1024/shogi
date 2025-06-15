@@ -25,6 +25,17 @@ const movementPatterns = {
 
 } 
 
+const komaName = {
+    1: "歩",
+    4: "香",
+    5: "桂",
+    6: "銀",
+    7: "金",
+    8: "角",
+    9: "飛",
+    77: "王"
+}
+
 
 function init() {
     let gameBoard = [
@@ -38,6 +49,8 @@ function init() {
         [0, 8, 0, 0, 0, 0, 0, 9, 0],
         [4, 5, 6, 7, 77, 7, 6, 5, 4]  
     ];
+
+    debugDisplay(gameBoard);
 
     let order = 0;
     let from = null;    
@@ -71,7 +84,7 @@ function init() {
             let temp = gameBoard[from.row][from.col];
             gameBoard[from.row][from.col] = 0;
             gameBoard[to.row][to.col] = temp;
-            console.log(gameBoard);
+            debugDisplay(gameBoard);
             from = null;
             order++;
         })
@@ -94,7 +107,6 @@ function isMovable(from, to, koma, board) {
         for (let step = 1; step <= (moveInfo.repeat ? 8 : 1); step++) {
             const r = from.row + (dr * step) * sign;
             const c = from.col + (dc * step) * sign;
-            console.log({r, c});
             if (r === to.row && c === to.col) {
                 if ((sign > 0 && board[r][c] >= 1) || (sign < 0 && board[r][c] <= -1)) {
                     return false;
@@ -110,6 +122,42 @@ function isMovable(from, to, koma, board) {
     }
 
     return false;
+}
+
+
+
+function debugDisplay(board) {
+    let cells  = document.getElementsByClassName("cell");
+
+    for (let [index, cell] of Object.entries(cells)) {
+        let num = parseInt(index, 10);
+        let row = Math.floor(num / 9);
+        let col = num % 9;
+
+        let koma = Math.abs(board[row][col]);
+        if (koma !== 0) {
+            cell.innerHTML = `${komaName[koma]}`;   
+        }
+
+        if (koma === 0) {
+            cell.innerHTML = "";
+        }
+
+    }
+
+    const debugDiv = document.getElementById("debugArea");
+    let html = "<table border='1' cellspacing='0' cellpadding='5' style='border-collapse: collapse;'>";
+    for (let row = 0; row < 9; row++) {
+        html += "<tr>";
+        for (let col = 0; col < 9; col++) {
+            let val = board[row][col];
+            html += `<td style="width: 30px; text-align: center;">${val}</td>`;
+        }
+        html += "</tr>";
+    }
+    html += "</table>";
+    debugDiv.innerHTML = html;
+
 }
 
 
