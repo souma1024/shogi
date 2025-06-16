@@ -38,6 +38,7 @@ const komaName = {
     77: "王"
 }
 
+let selectedHandPiece = null;
 
 function init() {
     let gameBoard = [
@@ -67,6 +68,27 @@ function init() {
             let num = parseInt(index, 10);
             let row = Math.floor(num / 9);
             let col = num % 9;
+
+            if (selectedHandPiece !== null) {
+                if (gameBoard[row][col] !== 0) return; // 空白マスのみ
+
+                gameBoard[row][col] = direct * selectedHandPiece;
+                if (direct === 1) {
+                    playerList[selectedHandPiece]--;
+                    debugSubDisplay(playerList, direct, gameBoard);
+                } else {
+                    opponentList[selectedHandPiece]--;
+                    debugSubDisplay(opponentList, direct, gameBoard);
+                }
+
+                selectedHandPiece = null;
+                from = null;
+                order++;
+                removeHighlights();
+                debugDisplay(gameBoard, direct);
+                return;
+            }
+
             
             if (from === null) {
                 if (direct * gameBoard[row][col] <= 0) return; // 自分の駒以外は選べない
@@ -86,16 +108,18 @@ function init() {
 
 
             if (!isMovable(from, to, koma, gameBoard)) {
+                from = {row, col};
+                highlightMovableCells(from, gameBoard[row][col], gameBoard); // ハイライト呼び出し
                 return;
             }
             
             if (gameBoard[from.row][from.col] * gameBoard[to.row][to.col] < 0) {
                 if (direct === 1) {
                     playerList[Math.abs(gameBoard[to.row][to.col])]++;
-                    debugSubDisplay(playerList, direct);
+                    debugSubDisplay(playerList, direct, gameBoard);
                 } else {
                     opponentList[gameBoard[to.row][to.col]]++;
-                    debugSubDisplay(opponentList, direct);
+                    debugSubDisplay(opponentList, direct, gameBoard);
                 }
             }
             
@@ -144,7 +168,7 @@ function isMovable(from, to, koma, board) {
 }
 
 
-function debugSubDisplay(list, direct) {
+function debugSubDisplay(list, direct, board) {
     let subCells;
     if (direct === 1) {
         subCells = document.getElementById("player").getElementsByClassName("sub-cell");
@@ -154,11 +178,60 @@ function debugSubDisplay(list, direct) {
 
     for (let [index, cell] of Object.entries(subCells)) {
         if (list[index] > 0) {
-            cell.innerHTML = `${komaName[index]}`;
+            if (list[index] === 1) {
+                cell.innerHTML = `${komaName[index]}`;
+            } else {
+                cell.innerHTML = `${komaName[index]}${list[index]}`;
+            }
+
+            
+            cell.addEventListener("click", () => {
+                selectedHandPiece = parseInt(index);
+                from = null;
+                removeHighlights();
+                highlightDropCells(board, direct);
+            }); 
+        } else {
+            cell.innerHTML = "";
         }
     }
     
 }
+
+function highlightDropCells(board, direct) {
+    removeHighlights();
+    for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+            if (board[r][c] !== 0) {
+                continue;
+            } 
+            
+            // 禁止打ち判定
+            if (selectedHandPiece === 1) { // 歩
+                // 二歩判定
+                const columnHasFu = board.some(row => row[c] === direct);
+                if (columnHasFu) continue;
+
+                // 先手後手それぞれ最終段には歩打てない
+                if ((direct === 1 && r === 0) || (direct === -1 && r === 8)) continue;
+            }
+
+            if (selectedHandPiece === 2) { // 香車
+                if ((direct === 1 && r === 0) || (direct === -1 && r === 8)) continue;
+            }
+
+            if (selectedHandPiece === 3) { // 桂馬
+                if ((direct === 1 && r <= 1) || (direct === -1 && r >= 7)) continue;
+            }
+            const index = r * 9 + c;
+            document.getElementsByClassName("cell")[index].classList.add("highlight");
+            
+        }
+    }
+}
+
+
+
 
 function debugDisplay(board, direct) {
     let cells  = document.getElementsByClassName("cell");
