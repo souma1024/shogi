@@ -69,12 +69,15 @@ function init() {
             let col = num % 9;
             
             if (from === null) {
+                if (direct * gameBoard[row][col] <= 0) return; // 自分の駒以外は選べない
                 from = {row, col};
+                highlightMovableCells(from, gameBoard[row][col], gameBoard); // ハイライト呼び出し
                 return;
             }
 
             if (from.row === row && from.col === col || direct * gameBoard[from.row][from.col] < 0) {
                 from = null;
+                removeHighlights();
                 return;
             }
 
@@ -100,6 +103,7 @@ function init() {
             gameBoard[from.row][from.col] = 0;
             gameBoard[to.row][to.col] = temp;
             from = null;
+            removeHighlights();
             order++;
             debugDisplay(gameBoard, direct);
         })
@@ -130,7 +134,7 @@ function isMovable(from, to, koma, board) {
                 return true;
             }
             // 壁外・駒に当たったら break
-            if (board[r][c] === undefined || board[r][c] != 0) {
+            if (r < 0 || r >= 9 || c < 0 || c >= 9 || board[r][c] != 0) {
                 break;
             }
         }
@@ -197,5 +201,25 @@ function debugDisplay(board, direct) {
     debugDiv.innerHTML = html;
 }
 
+function highlightMovableCells(from, koma, board) {
+
+    removeHighlights();
+
+    for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+            if (isMovable(from, {row: r, col: c}, koma, board)) {
+                const index = r * 9 + c;
+                document.getElementsByClassName("cell")[index].classList.add("highlight");
+            }
+        }
+    }
+}
+
+function removeHighlights() {
+    let cells = document.getElementsByClassName("cell");
+    for (let cell of cells) {
+        cell.classList.remove("highlight");
+    }
+}
 
 init();
